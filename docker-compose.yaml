@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_USER=entryuser
+      - MYSQL_PASSWORD=entrypass
+      - MYSQL_DATABASE=entrydb
+    depends_on:
+      - db
+
+  db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: entrydb
+      MYSQL_USER: entryuser
+      MYSQL_PASSWORD: entrypass
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  mysql-data:
