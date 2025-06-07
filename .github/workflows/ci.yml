@@ -32,7 +32,7 @@ jobs:
 
     - name: Run unit tests (simple curl check)
       run: |
-        sleep 5 # מחכה שהשרת יאתחל
+        sleep 5  # מחכה שהשרת יאתחל
         response=$(curl --write-out "%{http_code}" --silent --output /dev/null http://localhost:5000/)
         if [ "$response" -ne 200 ]; then
           echo "Unit test failed: Unexpected HTTP response $response"
