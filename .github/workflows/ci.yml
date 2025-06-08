@@ -1,70 +1,55 @@
-name: CI Pipeline
+name: CI/CD for EntryTracker
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
 jobs:
-  build:
-    runs-on: ubuntu-22.04
+  build-test-package-e2e-publish:
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Set up Python 3.10
+    - name: Setup Python 3.10
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10'
-
-    - name: Check Python version
-      run: python --version
+        python-version: 3.10
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run the application in the background
-      run: python app.py &
-
-    - name: Run unit tests (simple curl check)
+    - name: Run application in background
       run: |
+        python app.py &
         sleep 5
-        response=$(curl --write-out "%{http_code}" --silent --output /dev/null http://localhost:5000/)
-        if [ "$response" -ne 200 ]; then
-          echo "Unit test failed: Unexpected HTTP response $response"
-          exit 1
-        else
-          echo "Unit test passed"
-        fi
 
-  package:
-    runs-on: ubuntu-22.04
-    needs: build
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Run unit test (curl)
+      run: |
+        curl --fail http://localhost:5000/ || exit 1
 
     - name: Build Docker image
-      run: docker build -t rivka48651/entrytracker:latest .
+      run: |
+        docker build -t ghcr.io/${{ github.repository_owner }}/entrytracker:latest .
 
-    - name: Push image to Docker Hub
-      run: docker push rivka48651/entrytracker:latest
+    - name: Docker Compose up for E2E tests
+      run: |
+        docker-compose up -d
+        sleep 10
+        curl --fail http://localhost:5000/ || exit 1
+        docker-compose down
 
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GHCR_TOKEN }}
 
-
+    - name: Push Docker image to GHCR
+      run: |
+        docker push ghcr.io/${{ github.repository_owner }}/entrytracker:latest
