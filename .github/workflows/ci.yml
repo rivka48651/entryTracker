@@ -53,3 +53,11 @@ jobs:
     - name: Push Docker image to GHCR
       run: |
         docker push ghcr.io/${{ github.repository_owner }}/entrytracker:latest
+    - name: Check if port 5000 is free
+  run: |
+    if lsof -i :5000; then
+      echo "Port 5000 is in use, killing process"
+      lsof -t -i :5000 | xargs kill -9
+    else
+      echo "Port 5000 is free"
+    fi
