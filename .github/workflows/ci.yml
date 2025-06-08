@@ -10,8 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on:  ubuntu-22.04
-
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Checkout repository
@@ -20,7 +19,10 @@ jobs:
     - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
-        python-version: 3.10
+        python-version: '3.10'
+
+    - name: Check Python version
+      run: python --version
 
     - name: Install dependencies
       run: |
@@ -28,12 +30,11 @@ jobs:
         pip install -r requirements.txt
 
     - name: Run the application in the background
-      run: |
-        python app.py &
+      run: python app.py &
 
     - name: Run unit tests (simple curl check)
       run: |
-        sleep 5  # מחכה שהשרת יאתחל
+        sleep 5
         response=$(curl --write-out "%{http_code}" --silent --output /dev/null http://localhost:5000/)
         if [ "$response" -ne 200 ]; then
           echo "Unit test failed: Unexpected HTTP response $response"
@@ -41,5 +42,6 @@ jobs:
         else
           echo "Unit test passed"
         fi
+
 
 
